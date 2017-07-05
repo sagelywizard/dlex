@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+"""CLI for dlex"""
+import argparse
+
+import client
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='a command line interface to the dlex deep learning '
+                    'experiment framework'
+    )
+
+    subparsers = parser.add_subparsers(dest='command', help='sub-command help')
+    subparsers.required = True
+
+    add_command = subparsers.add_parser('add')
+    add_command.add_argument(
+        'experiment_name',
+        help='the name of the experiment')
+    add_command.add_argument(
+        'experiment_path',
+        help='the path to the experiment definition')
+
+    subparsers.add_parser('list')
+
+    delete_command = subparsers.add_parser('delete', help='delete the experiment')
+    delete_command.add_argument(
+        'experiment_name',
+        help='the name of the experiment')
+
+    run_command = subparsers.add_parser('run', help='run the experiment')
+    run_command.add_argument(
+        'experiment_name',
+        help='the name of the experiment')
+
+    tail_command = subparsers.add_parser('tail')
+    tail_command.add_argument(
+        'experiment_id',
+        help='the name of the experiment')
+
+    subparsers.add_parser('status')
+
+    pause_command = subparsers.add_parser('pause')
+    pause_command.add_argument(
+        'experiment_id',
+        help='the name of the experiment')
+
+    resume_command = subparsers.add_parser('resume')
+    resume_command.add_argument(
+        'experiment_id',
+        help='the name of the experiment')
+
+    copy_command = subparsers.add_parser('copy')
+    copy_command.add_argument(
+        'experiment_id',
+        help='the name of the experiment')
+
+    console_command = subparsers.add_parser('console')
+    console_command.add_argument(
+        'experiment_id',
+        help='the name of the experiment')
+
+    parser.add_argument('--version', action='version', version='0.0.1')
+
+    args = parser.parse_args()
+
+    cli = client.Client()
+
+    if args.command == 'add':
+        if cli.add(args.experiment_name, args.experiment_path) is False:
+            print("Error: failed")
+    elif args.command == 'list':
+        print(cli.list())
+    else:
+        raise NotImplementedError
+
+if __name__ == '__main__':
+    main()

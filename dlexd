@@ -8,7 +8,11 @@ import os
 
 def main(): # pylint: disable=missing-docstring
     parser = argparse.ArgumentParser(description='dlex daemon')
-    parser.add_argument('-p', '--socket-path', help='daemon socket path')
+    parser.add_argument(
+        '-p',
+        '--socket-path',
+        default='/tmp/sock_path',
+        help='daemon socket path')
 
     args = parser.parse_args()
 

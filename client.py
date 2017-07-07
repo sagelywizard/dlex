@@ -1,12 +1,14 @@
 """
 This module defines the main interface for running dlex experiments.
 """
-import db # pylint: disable=unused-import
+import db
+import unix_rpc
 
 class Client(object):
     """An object for executing CLI commands."""
-    def __init__(self, db_name='test.db'):
+    def __init__(self, db_name='test.db', socket_path='/tmp/sock_path'):
         self.ddb = db.DLEXDB(db_name)
+        self.socket_path = socket_path
 
     def close(self):
         # type: () -> ()
@@ -54,15 +56,16 @@ class Client(object):
         """
         return self.ddb.get_definitions()
 
-    def create(self, def_name, hyperparams):
-        # type: (str, Dict[str, Union[int, str]]) -> int
-        """Creates a new experiment from a definition
+    def run(self, def_name, hyperparams):
+        # type: (str) -> Union[None, int]
+        """Runs an experiment, based on definition `def_name`."""
+        print('run')
+        exp_id = self.ddb.create_experiment(def_name, hyperparams)
+        client = unix_rpc.Client(self.socket_path)
+        client.run('arg1', exp_id=exp_id)
+        return exp_id
 
-        Args:
-            def_name: (str) name of the experiment definition
-            hyperparams: (dict) a dict of the hyperparams for the experiment
-
-        Returns:
-            The ID of the experiment
-        """
-        return self.ddb.create_experiment(def_name, hyperparams)
+    def status(self):
+        # type: () -> List[Any]
+        """Returns the status of all experiments"""
+        return self.ddb.get_status()

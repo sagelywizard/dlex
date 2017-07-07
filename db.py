@@ -186,6 +186,12 @@ class DLEXDB(object):
         self.conn.commit()
         return self.cursor.rowcount == 1
 
+    def get_status(self):
+        # type: () -> List[Any]
+        """Gets the status of all experiments"""
+        self.cursor.execute("SELECT id, hyperparams, pid FROM experiments")
+        return self.cursor.fetchall()
+
     def close(self):
         # type: () -> None
         """Close the SQLite connection."""

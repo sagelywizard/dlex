@@ -1,6 +1,12 @@
 """
 This module defines the main interface for running dlex experiments.
 """
+import os
+import select
+import multiprocessing
+
+import selectable
+import runner
 import db
 import unix_rpc
 
@@ -59,13 +65,48 @@ class Client(object):
     def run(self, def_name, hyperparams):
         # type: (str) -> Union[None, int]
         """Runs an experiment, based on definition `def_name`."""
-        print('run')
         exp_id = self.ddb.create_experiment(def_name, hyperparams)
-        client = unix_rpc.Client(self.socket_path)
-        client.run('arg1', exp_id=exp_id)
+        if exp_id is None:
+            return None
+        def_path = self.ddb.get_definition(def_name)['path']
+        spawner = Spawner(self.socket_path, def_path, exp_id, hyperparams)
+        spawner.run()
         return exp_id
 
     def status(self):
         # type: () -> List[Any]
         """Returns the status of all experiments"""
         return self.ddb.get_status()
+
+class Spawner(multiprocessing.Process):
+    """A process to fork the model runner daemon.
+
+    This wrapper is necessary so as to not cause the os.fork to copy the CLI.
+    """
+    def __init__(self, socket_path, def_path, exp_id, hyperparams):
+        self.socket_path = socket_path
+        self.def_path = def_path
+        self.exp_id = exp_id
+        self.hyperparams = hyperparams
+        super(Spawner, self).__init__()
+
+    def run(self):
+        if os.fork() == 0:
+            if os.fork() == 0:
+                pipe = selectable.Pipe()
+                run = runner.Runner(
+                    pipe,
+                    self.def_path,
+                    self.exp_id,
+                    self.hyperparams)
+                run.start()
+                pipe.use_left()
+                client = unix_rpc.Client(self.socket_path)
+                client.running(self.exp_id)
+                read_from = [pipe, client]
+                while read_from != []:
+                    (readable, _, _) = select.select(read_from, [], [])
+                    for obj in readable:
+                        msg = obj.read()
+                        if msg is None:
+                            read_from.remove(obj)

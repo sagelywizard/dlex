@@ -3,25 +3,55 @@
 dlex daemon
 """
 import argparse
-import socket
-import os
+import logging
+
+import sys
+import daemon
+import daemon.pidfile
+import unix_rpc
+
+def run(*args, **kwargs):
+    print("OMG RUN: %s %s" % (args, kwargs))
+
+def running(exp_id):
+    print("woo")
+
+def run_server(socket_path):
+    server = unix_rpc.Server(socket_path)
+    server.register('run', run)
+    server.register('running', running)
+    server.start()
 
 def main(): # pylint: disable=missing-docstring
     parser = argparse.ArgumentParser(description='dlex daemon')
+
+    parser.add_argument('-d', action='store_true', default=False, help='run as daemon')
+
     parser.add_argument(
         '-p',
+        '--pid-path',
+        default='/tmp/dlexd.pid',
+        help='daemon pid path')
+
+    parser.add_argument(
+        '-s',
         '--socket-path',
         default='/tmp/sock_path',
         help='daemon socket path')
 
     args = parser.parse_args()
 
-    try:
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        sock.bind(args.socket_path)
-    finally:
-        if os.path.exists(args.socket_path):
-            os.remove(args.socket_path)
+    log = logging.getLogger('dlexd')
+    log.setLevel(logging.DEBUG)
+
+    context = daemon.DaemonContext(
+        pidfile=daemon.pidfile.PIDLockFile(args.pid_path),
+        detach_process=args.d,
+        stdout=sys.stdout,
+        stderr=sys.stderr
+    )
+    with context:
+        run_server(args.socket_path)
 
 if __name__ == '__main__':
     main()

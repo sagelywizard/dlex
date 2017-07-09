@@ -166,17 +166,22 @@ class DLEXDB(object):
             doesn't exist.
         """
         self.cursor.execute(
-            "SELECT definition_id, hyperparams, pid"
+            "SELECT experiments.definition_id, definitions.path, "
+            "       experiments.hyperparams, experiments.pid"
             "  FROM experiments"
-            "  WHERE id=?", (exp_id,))
+            "  INNER JOIN definitions"
+            "  ON experiments.definition_id == definitions.id"
+            "  WHERE experiments.id=?"
+            , (exp_id,))
 
         resp = self.cursor.fetchall()
         if resp == []:
             return None
-        [(def_id, hyperparams, pid)] = resp
+        [(def_id, def_path, hyperparams, pid)] = resp
         return {
             'id': exp_id,
             'def_id': def_id,
+            'def_path': def_path,
             'hyperparams': json.loads(hyperparams),
             'pid': pid}
 

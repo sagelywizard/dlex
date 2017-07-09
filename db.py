@@ -155,7 +155,7 @@ class DLEXDB(object):
             return None
         return self.cursor.lastrowid
 
-    def read_experiment(self, exp_id):
+    def get_experiment(self, exp_id):
         # type: (int) -> Union[None, Dict[str, Union[int, str]]]
         """Reads an experiment given its ID
 

@@ -136,7 +136,7 @@ class DLEXDB(object):
         return self.cursor.rowcount == 1
 
     def create_experiment(self, def_name, hyperparams):
-        # type: (str, Dict[Any, Any]) -> int
+        # type: (str, Dict[Any, Any]) -> Union[int, None]
         """Creates an experiment from a definition
 
         Args:
@@ -151,6 +151,8 @@ class DLEXDB(object):
             "  SELECT id, ? FROM definitions WHERE name=?", (
                 json.dumps(hyperparams), def_name))
         self.conn.commit()
+        if self.cursor.rowcount == 0:
+            return None
         return self.cursor.lastrowid
 
     def read_experiment(self, exp_id):

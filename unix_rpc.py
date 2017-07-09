@@ -99,3 +99,6 @@ class Client(object):
 
     def read(self):
         return self.__socket.recv(1024)
+
+    def close(self):
+        self.__socket.close()

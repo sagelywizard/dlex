@@ -45,7 +45,7 @@ class RPC(object):
         if msg_type == 'error':
             if msg == 'UnknownRPCError':
                 raise UnknownRPCError
-            raise RPCError
+            raise RPCError(msg)
 
         return msg
 

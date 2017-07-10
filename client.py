@@ -21,6 +21,18 @@ class Client(object):
         """Close the CLI object."""
         self.ddb.close()
 
+    def clean(self):
+        """Removes all non-running experiments from state"""
+        for exp in self.status():
+            if exp['pid'] is None:
+                self.ddb.delete_experiment(exp['id'])
+            else:
+                try:
+                    # raises OSError if pid is dead
+                    os.kill(exp['pid'], 0)
+                except OSError:
+                    self.ddb.delete_experiment(exp['id'])
+
     def add(self, def_name, def_path):
         # type: (str, str) -> bool
         """Creates a new experiment definition

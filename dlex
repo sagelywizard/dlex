@@ -40,6 +40,8 @@ def main():
 
     subparsers.add_parser('status')
 
+    subparsers.add_parser('clean')
+
     pause_command = subparsers.add_parser('pause')
     pause_command.add_argument(
         'experiment_id',
@@ -71,6 +73,8 @@ def main():
             print("Error: failed")
     elif args.command == 'list':
         print(cli.list())
+    elif args.command == 'clean':
+        print(cli.clean())
     elif args.command == 'status':
         print(cli.status())
     elif args.command == 'run':

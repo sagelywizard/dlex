@@ -48,10 +48,10 @@ class TestDLEXDB(unittest.TestCase):
         self.assertTrue(self.ddb.insert_definition('exp1', '/a/b/c'))
         exp_id = self.ddb.create_experiment('exp1', {'k1': 'v1'})
         self.assertEqual(exp_id, 1)
-        exp = self.ddb.read_experiment(exp_id)
+        exp = self.ddb.get_experiment(exp_id)
         self.assertEqual(exp['hyperparams']['k1'], 'v1')
         self.assertTrue(self.ddb.delete_experiment(exp_id))
-        self.assertIsNone(self.ddb.read_experiment(exp_id))
+        self.assertIsNone(self.ddb.get_experiment(exp_id))
 
     def tearDown(self):
         self.ddb.close()

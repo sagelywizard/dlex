@@ -1,4 +1,5 @@
 import socket
+import select
 import struct
 import json
 import os
@@ -11,7 +12,10 @@ def msg_send(sock, msg):
     sock.sendall(b'%b%b' % (header, j.encode('utf-8')))
 
 def msg_recv(sock):
-    buff = b''
+    buff = sock.recv(1024)
+    if buff == b'':
+        return None
+
     while len(buff) < 8:
         buff += sock.recv(1024)
 
@@ -63,21 +67,33 @@ class Server(object):
 
     def start(self):
         try:
+            conns = [self.socket]
             while True:
-                conn, _ = self.socket.accept()
-                [msg_type, method, args, kwargs] = msg_recv(conn)
-                assert msg_type == 'rpc'
-                if method not in self.funs:
-                    msg_send(conn, ['error', 'UnknownRPCError'])
-                else:
-                    try:
-                        ret = self.funs[method](*args, **kwargs)
-                        msg_send(conn, ['return', ret])
-                    except Exception as e:
+                readable, _, _ = select.select(conns, [], [])
+                if self.socket in readable:
+                    conn, _ = self.socket.accept()
+                    conns.append(conn)
+                    readable.remove(self.socket)
+                for conn in readable:
+                    msg = msg_recv(conn)
+                    if msg is None:
+                        conn.close()
+                        conns.remove(conn)
+                        continue
+                    else:
+                        [msg_type, method, args, kwargs] = msg
+                    assert msg_type == 'rpc'
+                    if method not in self.funs:
+                        msg_send(conn, ['error', 'UnknownRPCError'])
+                    else:
                         try:
-                            msg_send(conn, ['error', str(e)])
-                        except:
-                            pass
+                            ret = self.funs[method](*args, **kwargs)
+                            msg_send(conn, ['return', ret])
+                        except Exception as e:
+                            try:
+                                msg_send(conn, ['error', str(e)])
+                            except:
+                                pass
         finally:
             try:
                 if os.path.exists(self.path):

@@ -76,7 +76,12 @@ def main():
     elif args.command == 'clean':
         print(cli.clean())
     elif args.command == 'status':
-        print(cli.status())
+        exps = cli.status()
+        print('pid\thyperparams\tpid')
+        print('-------------')
+        for exp in exps:
+            print('%s\t%s\t%s' % (exp['id'], exp['hyperparams'], exp['pid']))
+        print('-------------')
     elif args.command == 'run':
         if cli.run(args.experiment_name, {}) is None:
             print("Error: experiment unknown")

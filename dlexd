@@ -48,7 +48,9 @@ def main(): # pylint: disable=missing-docstring
         pidfile=daemon.pidfile.PIDLockFile(args.pid_path),
         detach_process=args.d,
         stdout=sys.stdout,
-        stderr=sys.stderr
+        stderr=sys.stderr,
+        umask=2,
+        working_directory=os.getcwd()
     )
     with context:
         run_server(args.socket_path)

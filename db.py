@@ -197,7 +197,10 @@ class DLEXDB(object):
         # type: () -> List[Any]
         """Gets the status of all experiments"""
         self.cursor.execute("SELECT id, hyperparams, pid FROM experiments")
-        return self.cursor.fetchall()
+        exps = []
+        for exp_id, hyperparams, pid in self.cursor.fetchall():
+            exps.append({'id': exp_id, 'hyperparams': hyperparams, 'pid': pid})
+        return exps
 
     def close(self):
         # type: () -> None

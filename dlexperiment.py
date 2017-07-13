@@ -1,9 +1,15 @@
 class Experiment(object):
-    def __init__(self, epochs=1):
+    def __init__(self, model, optimizer, train_data, test_data, epochs=1):
+        self.model = model
+        self.optimizer = optimizer
+        self.train_data = train_data
+        self.test_data = test_data
         self.epochs = epochs
+        self.loss = 0
+        self.current_epoch = 0
 
-    def get_epochs(self):
-        return self.epochs
+    def get_epoch(self):
+        return self.current_epoch
 
     def train(self):
         raise NotImplementedError
@@ -11,8 +17,8 @@ class Experiment(object):
     def test(self):
         raise NotImplementedError
 
-    def set_loss(self):
-        raise NotImplementedError
+    def set_loss(self, loss):
+        self.loss = loss
 
     def checkpoint(self):
         raise NotImplementedError

@@ -2,6 +2,8 @@
 """CLI for dlex"""
 import argparse
 
+import tabulate
+
 import client
 
 def main():
@@ -72,16 +74,11 @@ def main():
         if cli.add(args.experiment_name, args.experiment_path) is False:
             print("Error: failed")
     elif args.command == 'list':
-        print(cli.list())
+        print(tabulate.tabulate(cli.list(), headers='keys'))
     elif args.command == 'clean':
-        print(cli.clean())
+        cli.clean()
     elif args.command == 'status':
-        exps = cli.status()
-        print('pid\thyperparams\tpid')
-        print('-------------')
-        for exp in exps:
-            print('%s\t%s\t%s' % (exp['id'], exp['hyperparams'], exp['pid']))
-        print('-------------')
+        print(tabulate.tabulate(cli.status(), headers='keys'))
     elif args.command == 'run':
         if cli.run(args.experiment_name, {}) is None:
             print("Error: experiment unknown")

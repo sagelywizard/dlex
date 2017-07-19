@@ -1,9 +1,8 @@
 class Experiment(object):
-    def __init__(self, model, optimizer, train_data, test_data, epochs=1):
+    def __init__(self, model, optimizer, dataset, epochs=1):
         self.model = model
         self.optimizer = optimizer
-        self.train_data = train_data
-        self.test_data = test_data
+        self.dataset = dataset
         self.epochs = epochs
         self.loss = 0
         self.current_epoch = 0
@@ -12,6 +11,9 @@ class Experiment(object):
         return self.current_epoch
 
     def train(self):
+        raise NotImplementedError
+
+    def validate(self):
         raise NotImplementedError
 
     def test(self):
@@ -35,3 +37,18 @@ class Experiment(object):
 class PyTorchExperiment(object):
     def save(self):
         pass
+
+class Dataset(object):
+    def __init__(self, dataset_file):
+        self.file = dataset_file
+
+    def next(self, batch_size=1):
+        acc = []
+        for _ in range(batch_size):
+            next_line = self.file.readline()
+            if next_line == '':
+                if acc == []:
+                    return None
+                return acc
+            acc.append(next_line)
+        return acc

@@ -2,13 +2,10 @@
 This module defines the main interface for running dlex experiments.
 """
 import os
-import select
-import multiprocessing
 
-import selectable
-import runner
 import db
 import unix_rpc
+from spawner import Spawner
 
 class Client(object):
     """An object for executing CLI commands."""
@@ -88,49 +85,17 @@ class Client(object):
     def status(self):
         # type: () -> List[Any]
         """Returns the status of all experiments"""
-        return self.ddb.get_status()
+        status = self.ddb.get_status()
+        client = unix_rpc.Client(self.socket_path)
+        for exp in status:
+            loss = client.get_loss(exp['id'])
+            epoch = client.get_epoch(exp['id'])
+            exp['loss'] = loss
+            exp['epoch'] = epoch
+        return status
 
     def pause(self, exp_id):
+        client = unix_rpc.Client(self.socket_path)
+
+    def unpause(self, exp_id):
         pass
-
-class Spawner(multiprocessing.Process):
-    """A process to fork the model runner daemon.
-
-    This wrapper is necessary so as to not cause the os.fork to copy the CLI.
-    """
-    def __init__(self, db_path, socket_path, exp_id):
-        self.db_path = db_path
-        self.socket_path = socket_path
-        self.exp_id = exp_id
-        super(Spawner, self).__init__()
-
-    def run(self):
-        if os.fork() == 0:
-            if os.fork() == 0:
-                client = unix_rpc.Client(self.socket_path)
-                client.running(self.exp_id, os.getpid())
-                ddb = db.DLEXDB(self.db_path)
-                assert ddb.set_pid(self.exp_id, os.getpid())
-                exp = ddb.get_experiment(self.exp_id)
-                pipe = selectable.Pipe()
-                run = runner.Runner(
-                    pipe,
-                    exp['def_path'],
-                    self.exp_id,
-                    exp['hyperparams'])
-                run.start()
-                pipe.use_left()
-                read_from = [pipe, client]
-                while read_from != []:
-                    (readable, _, _) = select.select(read_from, [], [])
-                    for obj in readable:
-                        msg = obj.read()
-                        if msg is None and obj is pipe and not pipe.read_pipe.is_open():
-                            read_from.remove(pipe)
-                        else:
-                            if msg == ['status', 'done']:
-                                client.done(self.exp_id, os.getpid())
-                                client.close()
-                                read_from.remove(client)
-
-                run.join()

@@ -25,6 +25,8 @@ def main():
 
     subparsers.add_parser('list')
 
+    subparsers.add_parser('datasets')
+
     delete_command = subparsers.add_parser('delete', help='delete the experiment')
     delete_command.add_argument(
         'experiment_name',
@@ -82,6 +84,10 @@ def main():
     elif args.command == 'run':
         if cli.run(args.experiment_name, {}) is None:
             print("Error: experiment unknown")
+    elif args.command == 'pause':
+        cli.pause(args.experiment_id)
+    elif args.command == 'unpause':
+        cli.unpause(args.experiment_id)
     else:
         raise NotImplementedError
 

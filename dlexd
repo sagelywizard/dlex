@@ -18,6 +18,21 @@ class Tracker(object):
         self.ddb = db.DLEXDB(db_path)
         self.status = defaultdict(lambda: {})
 
+    def set_status(self, exp_id, status):
+        self.status[exp_id]['status'] = status
+
+    def get_status(self, exp_id):
+        return self.status[exp_id].get('status')
+
+    def set_epoch(self, exp_id, epoch):
+        self.status[exp_id]['epoch'] = epoch
+        print('setting epoch for %s to %s' % (exp_id, epoch))
+
+    def set_loss(self, exp_id, loss):
+        epoch = self.status[exp_id]['epoch']
+        #print('Experiment %s loss %s, epoch %s' % (exp_id, loss, epoch))
+        self.status[exp_id]['loss'] = loss
+
     def done(self, exp_id, pid):
         assert exp_id in self.status
         assert self.status[exp_id]['pid'] == pid
@@ -26,14 +41,27 @@ class Tracker(object):
 
     def running(self, exp_id, pid):
         self.status[exp_id]['pid'] = pid
+        self.status[exp_id]['epoch'] = 0
         assert self.ddb.set_pid(exp_id, pid)
         print('Experiment %s running as pid %s' % (exp_id, pid))
+
+    def get_epoch(self, exp_id):
+        return self.status[exp_id].get('epoch')
+
+    def get_loss(self, exp_id):
+        return self.status[exp_id].get('loss')
 
 def run_server(socket_path):
     tracker = Tracker()
     server = unix_rpc.Server(socket_path)
     server.register('running', tracker.running)
     server.register('done', tracker.done)
+    server.register('set_status', tracker.set_status)
+    server.register('get_status', tracker.get_status)
+    server.register('set_loss', tracker.set_loss)
+    server.register('set_epoch', tracker.set_epoch)
+    server.register('get_loss', tracker.get_loss)
+    server.register('get_epoch', tracker.get_epoch)
     server.start()
 
 def main(): # pylint: disable=missing-docstring

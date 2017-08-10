@@ -88,10 +88,9 @@ class Client(object):
         status = self.ddb.get_status()
         client = unix_rpc.Client(self.socket_path)
         for exp in status:
-            loss = client.get_loss(exp['id'])
-            epoch = client.get_epoch(exp['id'])
-            exp['loss'] = loss
-            exp['epoch'] = epoch
+            exp['status'] = client.get_status(exp['id'])
+            exp['loss'] = client.get_loss(exp['id'])
+            exp['epoch'] = client.get_epoch(exp['id'])
         return status
 
     def pause(self, exp_id):

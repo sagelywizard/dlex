@@ -43,11 +43,13 @@ class Spawner(multiprocessing.Process):
                             read_from.remove(pipe)
                         elif msg[0] == 'loss':
                             client.set_loss(self.exp_id, msg[1])
-                        elif msg == ['status', 'done']:
-                            response = client.done(self.exp_id, os.getpid())
-                            if response == 'terminate':
-                                client.close()
-                                read_from.remove(client)
+                        elif msg[0] == 'status':
+                            client.set_status(self.exp_id, msg[1])
+                            if msg[1] == 'done':
+                                response = client.done(self.exp_id, os.getpid())
+                                if response == 'terminate':
+                                    client.close()
+                                    read_from.remove(client)
                         elif msg[0] == 'epoch':
                             client.set_epoch(self.exp_id, msg[1])
                     else:

@@ -102,6 +102,7 @@ class Server(object):
                 pass
 
 class Client(object):
+    """A select-able client for Server"""
     def __init__(self, path):
         self.__path = path
         self.__socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

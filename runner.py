@@ -5,7 +5,7 @@ import importlib.util
 import inspect
 import select
 
-from dlexperiment import Experiment
+from dlex import Experiment
 
 class Runner(multiprocessing.Process):
     """A process for running an experiment.
@@ -38,14 +38,40 @@ class Runner(multiprocessing.Process):
         if exp_class is not None:
             self.pipe.write(['status', 'initializing experiment'])
             experiment = exp_class()
-            self.pipe.write(['epochs', experiment.get_epochs()])
+            self.pipe.write(['epoch', experiment.get_epoch()])
             self.pipe.write(['status', 'experiment running'])
-            while not experiment.is_done():
-                experiment.train()
+
+            train_gen = experiment.train()
+            paused = False
+            done = False
+            while not done:
+                if experiment.epochs_left() < 0:
+                    paused = True
+                else:
+                    train_status = next(train_gen)
+                    if train_status is False:
+                        experiment.current_epoch += 1
+                        self.pipe.write(['epoch', experiment.current_epoch])
+                    self.pipe.write(['loss', experiment.loss])
+                    self.pipe.write(['position', experiment.position])
                 (readable, _, _) = select.select([self.pipe], [], [], 0)
+
                 if readable != []:
                     msg = self.pipe.read()
+                    if msg == 'terminate':
+                        done = True
+                        self.pipe.write(['status', 'terminated'])
+                        break
+                    elif msg == 'save':
+                        break
+                    elif msg == 'pause':
+                        paused = True
                     print('model got a message: %s' % msg)
+
+                while paused:
+                    msg = self.pipe.read()
+                    if msg == 'unpause':
+                        paused = False
             self.pipe.write(['status', 'done'])
         else:
             self.pipe.write(['status', 'failed'])

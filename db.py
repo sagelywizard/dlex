@@ -216,6 +216,15 @@ class DLEXDB(object):
             exps.append({'id': exp_id, 'hyperparams': hyperparams, 'pid': pid})
         return exps
 
+    def get_datasets(self):
+        # type: () -> List[Any]
+        """Gets a list of all datasets"""
+        self.cursor.execute("SELECT id, name, directory FROM datasets")
+        datasets = []
+        for d_id, name, directory in self.cursor.fetchall():
+            datasets.append({'id': d_id, 'name': name, 'directory': directory})
+        return datasets
+
     def close(self):
         # type: () -> None
         """Close the SQLite connection."""

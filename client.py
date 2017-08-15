@@ -98,3 +98,7 @@ class Client(object):
 
     def unpause(self, exp_id):
         pass
+
+    def get_datasets(self):
+        """List all known datasets"""
+        return self.ddb.get_datasets()

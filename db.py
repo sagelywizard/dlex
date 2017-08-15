@@ -68,6 +68,20 @@ class DLEXDB(object):
                 "  FOREIGN KEY    (experiment_id) REFERENCES experiments(id)"
                 ")")
 
+        self.cursor.execute(
+            "SELECT name "
+            "FROM sqlite_master "
+            "WHERE type='table' AND name='datasets'")
+
+        if len(self.cursor.fetchall()) == 0:
+            self.cursor.execute(
+                "CREATE TABLE datasets ("
+                "  id INTEGER     PRIMARY KEY,"
+                "  name           TEXT,"
+                "  directory      TEXT"
+                ")")
+
+
     def insert_definition(self, name, path):
         # type: (str, str) -> Union[bool, int]
         """Insert a new experiment definition"""

@@ -25,7 +25,8 @@ def main():
 
     subparsers.add_parser('list')
 
-    subparsers.add_parser('datasets')
+    datasets_command = subparsers.add_parser('datasets')
+    datasets_command.add_argument('subcmd', help='dataset sub-command')
 
     delete_command = subparsers.add_parser('delete', help='delete the experiment')
     delete_command.add_argument(
@@ -88,6 +89,9 @@ def main():
         cli.pause(args.experiment_id)
     elif args.command == 'unpause':
         cli.unpause(args.experiment_id)
+    elif args.command == 'datasets':
+        if args.subcmd == 'list':
+            cli.list_datasets()
     else:
         raise NotImplementedError
 

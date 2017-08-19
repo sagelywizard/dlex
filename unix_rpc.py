@@ -103,7 +103,8 @@ class Server(object):
 
 class Client(object):
     """A select-able client for Server"""
-    def __init__(self, path):
+    def __init__(self, path, handlers={}):
+        self.handlers = handlers
         self.__path = path
         self.__socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.__socket.connect(self.__path)
@@ -114,8 +115,20 @@ class Client(object):
     def fileno(self):
         return self.__socket.fileno()
 
-    def read(self):
-        return self.__socket.recv(1024)
+    def handle_message(self):
+        [msg_type, method, args, kwargs] = msg_recv(self.__socket)
+        assert msg_type == 'rpc'
+        if method not in self.handlers:
+            msg_send(self.__socket, ['error', 'UnknownRPCError'])
+        else:
+            try:
+                ret = self.handlers[method](*args, **kwargs)
+                msg_send(self.__socket, ['return', ret])
+            except Exception as e:
+                try:
+                    msg_send(self.__socket, ['error', str(e)])
+                except:
+                    pass
 
     def close(self):
         self.__socket.close()
